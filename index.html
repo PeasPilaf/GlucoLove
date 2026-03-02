@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f0e0c">
+    
+    <title>GlucoTrack Pro</title>
+    
+    <!-- PWA Links -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:wght@600&display=swap" rel="stylesheet">
+    
+    <!-- Libraries (Loaded via CDN for GH Pages compatibility) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0f0e0c;
+            --card: #1a1815;
+            --border: #2e2b24;
+            --amber: #e8a045;
+            --green: #5cb88a;
+            --red: #e05c5c;
+            --text: #f0ead8;
+            --text-dim: #8a8070;
+            --mono: 'DM Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Fraunces', serif;
+            line-height: 1.5;
+            padding-bottom: 100px;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 480px; margin: 0 auto; padding: 20px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .logo { font-size: 1.5rem; font-weight: 600; color: var(--text); }
+        .logo span { color: var(--amber); }
+        .date-display { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); text-align: right; }
+
+        /* Hero Card */
+        .hero-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .hero-label { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; letter-spacing: 1px; }
+        .hero-value { font-size: 5rem; font-weight: 600; font-family: var(--mono); line-height: 1; color: var(--amber); }
+        .hero-unit { font-size: 1rem; color: var(--text-dim); margin-top: 5px; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab { 
+            flex: 1; padding: 12px; background: transparent; border: 1px solid var(--border); 
+            border-radius: 12px; color: var(--text-dim); font-family: var(--mono); 
+            font-size: 0.65rem; text-transform: uppercase; cursor: pointer; transition: 0.2s;
+        }
+        .tab.active { background: var(--amber); color: #000; border-color: var(--amber); }
+
+        /* Input Styles */
+        .input-group { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 15px; }
+        label { display: block; font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px; }
+        input, select {
+            width: 100%; background: #242118; border: 1px solid var(--border); 
+            color: var(--text); padding: 14px; border-radius: 10px; font-family: var(--mono); font-size: 1rem; outline: none;
+        }
+        input:focus { border-color: var(--amber); }
+        .big-input { font-size: 3rem; text-align: center; color: var(--amber); padding: 20px; font-weight: bold; }
+
+        /* Buttons */
+        .btn-scan { 
+            width: 100%; padding: 25px; background: #2a2620; border: 2px dashed var(--amber); 
+            border-radius: 20px; color: var(--amber); font-family: var(--mono); 
+            margin-bottom: 20px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        .btn-save { width: 100%; padding: 18px; background: var(--amber); border: none; border-radius: 12px; font-weight: 600; font-family: var(--mono); text-transform: uppercase; cursor: pointer; color: #000; font-size: 1rem; }
+
+        /* Scanner Overlay */
+        #scanner-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 5000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        #scanner-video { width: 100%; height: 100%; object-fit: cover; }
+        .viewfinder { 
+            position: absolute; width: 300px; height: 180px; border: 2px solid var(--amber); 
+            border-radius: 20px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.75); 
+        }
+        .viewfinder-shimmer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--amber);
+            box-shadow: 0 0 15px var(--amber); animation: scanline 2.5s infinite linear;
+        }
+        @keyframes scanline { 0% { top: 0; } 100% { top: 100%; } }
+        .scanner-close { position: absolute; top: 50px; right: 20px; color: #fff; background: rgba(255,255,255,0.2); border: none; padding: 12px 24px; border-radius: 30px; font-family: var(--mono); }
+
+        /* Panels */
+        .panel { display: none; animation: fadeIn 0.3s ease; }
+        .panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* History Items */
+        .history-item { 
+            background: var(--card); border: 1px solid var(--border); padding: 18px; 
+            border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .h-val { font-family: var(--mono); font-size: 1.6rem; font-weight: 600; }
+        .h-meta { font-size: 0.75rem; color: var(--text-dim); font-family: var(--mono); }
+
+        /* Bottom Navbar */
+        nav {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); 
+            width: 100%; max-width: 480px; background: rgba(15,14,12,0.98); 
+            border-top: 1px solid var(--border); display: flex; padding: 12px 0 30px; z-index: 4000;
+        }
+        .nav-item { flex: 1; text-align: center; color: var(--text-dim); font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; border: none; background: none; cursor: pointer; }
+        .nav-item.active { color: var(--amber); }
+        .nav-item span { display: block; font-size: 1.4rem; margin-bottom: 4px; }
+
+        /* Toast */
+        #toast { 
+            position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); 
+            background: var(--amber); color: #000; padding: 12px 24px; border-radius: 40px; 
+            font-family: var(--mono); font-size: 0.85rem; font-weight: 600; display: none; z-index: 6000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">Gluco<span>Track</span></div>
+        <div class="date-display" id="date-now"></div>
+    </header>
+
+    <div class="hero-card">
+        <div class="hero-label">Latest Blood Glucose</div>
+        <div class="hero-value" id="hero-val">--</div>
+        <div class="hero-unit">mg/dL</div>
+        <div class="h-meta" id="hero-time" style="margin-top:12px">No readings logged yet</div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" id="tab-log" onclick="showTab('log')">Log</button>
+        <button class="tab" id="tab-history" onclick="showTab('history')">History</button>
+        <button class="tab" id="tab-trends" onclick="showTab('trends')">Trends</button>
+        <button class="tab" id="tab-data" onclick="showTab('data')">Data</button>
+    </div>
+
+    <!-- LOG PANEL -->
+    <div id="panel-log" class="panel active">
+        <button class="btn-scan" onclick="startScanner()">
+            <span style="font-size: 2rem;">📸</span>
+            <strong>Live Scan Meter</strong>
+            <small style="opacity: 0.7; font-weight: normal;">Auto-detect digits from screen</small>
+        </button>
+
+        <div class="input-group">
+            <label>Glucose Level (mg/dL)</label>
+            <input type="number" id="bg-input" class="big-input" placeholder="---">
+        </div>
+
+        <div class="input-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+                <label>Context</label>
+                <select id="bg-context">
+                    <option>Fasting</option>
+                    <option>Pre-meal</option>
+                    <option selected>Post-meal</option>
+                    <option>Bedtime</option>
+                </select>
+            </div>
+            <div>
+                <label>Date/Time</label>
+                <input type="datetime-local" id="bg-time">
+            </div>
+        </div>
+        
+        <button class="btn-save" onclick="saveEntry()">Save Entry</button>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div id="panel-history" class="panel">
+        <div id="history-container"></div>
+    </div>
+
+    <!-- TRENDS PANEL -->
+    <div id="panel-trends" class="panel">
+        <div class="input-group">
+            <canvas id="trendChart" height="250"></canvas>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="input-group" style="text-align: center;">
+                <label>Avg (15 Entries)</label>
+                <div id="stat-avg" style="font-family: var(--mono); font-size: 1.8rem; font-weight: bold;">--</div>
+            </div>
+            <div class="input-group" style="text-align: center;">
+                <label>Max (15 Entries)</label>
+                <div id="stat-max" style="font-family: var(--mono); font-size: 1.8rem; color: var(--red); font-weight: bold;">--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA PANEL -->
+    <div id="panel-data" class="panel">
+        <div class="input-group">
+            <label>Manage Data</label>
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px;">Your health data never leaves this phone. Export to keep a backup.</p>
+            <button class="btn-save" style="background: #242118; color: var(--amber); border: 1px solid var(--border); margin-bottom: 12px;" onclick="exportCSV()">📊 Export to Excel (CSV)</button>
+            <button class="btn-save" style="background: transparent; color: var(--red); border: 1px solid var(--red);" onclick="wipeData()">🗑 Delete All Records</button>
+        </div>
+    </div>
+</div>
+
+<nav>
+    <button class="nav-item active" id="nav-log" onclick="showTab('log')"><span>✏️</span>Log</button>
+    <button class="nav-item" id="nav-history" onclick="showTab('history')"><span>📋</span>History</button>
+    <button class="nav-item" id="nav-trends" onclick="showTab('trends')"><span>📈</span>Trends</button>
+    <button class="nav-item" id="nav-data" onclick="showTab('data')"><span>💾</span>Data</button>
+</nav>
+
+<!-- SCANNER UI -->
+<div id="scanner-overlay">
+    <video id="scanner-video" playsinline autoplay></video>
+    <div class="viewfinder">
+        <div class="viewfinder-shimmer"></div>
+    </div>
+    <div style="position: absolute; bottom: 120px; text-align: center; width: 85%; color: white; font-family: var(--mono); font-size: 0.85rem; line-height: 1.4; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px;">
+        Hold the meter digits inside the box.<br>Detection is automatic and takes a moment.
+    </div>
+    <button class="scanner-close" onclick="stopScanner()">Cancel</button>
+    <canvas id="ocr-canvas" style="display:none"></canvas>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    // --- PWA SERVICE WORKER REGISTRATION ---
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(() => console.log("SW Registered"));
+    }
+
+    // --- DATABASE (IndexedDB) ---
+    let db;
+    const request = indexedDB.open("GlucoTrackDB", 1);
+    request.onupgradeneeded = (e) => {
+        db = e.target.result;
+        db.createObjectStore("readings", { keyPath: "id", autoIncrement: true });
+    };
+    request.onsuccess = (e) => {
+        db = e.target.result;
+        refreshUI();
+    };
+
+    // --- UI NAVIGATION ---
+    function showTab(tabId) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        
+        document.getElementById(`panel-${tabId}`).classList.add('active');
+        document.getElementById(`nav-${tabId}`).classList.add('active');
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        
+        if(tabId === 'trends') renderCharts();
+        if(tabId === 'history') refreshUI();
+    }
+
+    function notify(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    // --- OCR & CAMERA LOGIC ---
+    let videoStream = null;
+    let isScanning = false;
+    let worker = null;
+
+    async function initTesseract() {
+        if (!worker) {
+            worker = await Tesseract.createWorker('eng');
+            await worker.setParameters({
+                tessedit_char_whitelist: '0123456789',
+                tessedit_pageseg_mode: '7' // Single line mode
+            });
+        }
+    }
+
+    async function startScanner() {
+        try {
+            await initTesseract();
+            videoStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment', focusMode: 'continuous' } 
+            });
+            const video = document.getElementById('scanner-video');
+            video.srcObject = videoStream;
+            document.getElementById('scanner-overlay').style.display = 'flex';
+            isScanning = true;
+            processFrame();
+        } catch (err) {
+            alert("Camera access required for scanning.");
+        }
+    }
+
+    function stopScanner() {
+        if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+        document.getElementById('scanner-overlay').style.display = 'none';
+        isScanning = false;
+    }
+
+    async function processFrame() {
+        if (!isScanning) return;
+
+        const video = document.getElementById('scanner-video');
+        const canvas = document.getElementById('ocr-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const scale = video.videoWidth / video.clientWidth;
+            const w = 300 * scale;
+            const h = 180 * scale;
+            const x = (video.videoWidth - w) / 2;
+            const y = (video.videoHeight - h) / 2;
+
+            canvas.width = w; canvas.height = h;
+            ctx.drawImage(video, x, y, w, h, 0, 0, w, h);
+
+            // B&W Thresholding for LCD digits
+            let imageData = ctx.getImageData(0, 0, w, h);
+            let data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                let v = (data[i] + data[i+1] + data[i+2]) / 3;
+                let final = v > 115 ? 255 : 0; 
+                data[i] = data[i+1] = data[i+2] = final;
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            const { data: { text, confidence } } = await worker.recognize(canvas);
+            const num = parseInt(text.trim());
+
+            if (confidence > 80 && num > 20 && num < 600) {
+                if (navigator.vibrate) navigator.vibrate(200);
+                document.getElementById('bg-input').value = num;
+                notify(`Reading Detected: ${num}`);
+                stopScanner();
+                return;
+            }
+        }
+        setTimeout(processFrame, 500);
+    }
+
+    // --- DATA HANDLING ---
+    function saveEntry() {
+        const val = parseInt(document.getElementById('bg-input').value);
+        if (!val || val < 10) { alert("Please enter a valid glucose number."); return; }
+
+        const entry = {
+            value: val,
+            context: document.getElementById('bg-context').value,
+            time: document.getElementById('bg-time').value || new Date().toISOString(),
+            id: Date.now()
+        };
+
+        const tx = db.transaction("readings", "readwrite");
+        tx.objectStore("readings").add(entry);
+        tx.oncomplete = () => {
+            document.getElementById('bg-input').value = "";
+            notify("Reading Saved Successfully");
+            refreshUI();
+            showTab('history');
+        };
+    }
+
+    async function refreshUI() {
+        const tx = db.transaction("readings", "readonly");
+        const store = tx.objectStore("readings");
+        const all = await new Promise(res => {
+            store.getAll().onsuccess = e => res(e.target.result);
+        });
+
+        const sorted = all.sort((a, b) => new Date(b.time) - new Date(a.time));
+        
+        if (sorted.length > 0) {
+            const last = sorted[0];
+            document.getElementById('hero-val').innerText = last.value;
+            const dateStr = new Date(last.time).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+            document.getElementById('hero-time').innerText = `${dateStr} · ${last.context}`;
+        }
+
+        const histContainer = document.getElementById('history-container');
+        histContainer.innerHTML = sorted.map(r => `
+            <div class="history-item">
+                <div>
+                    <div class="h-val" style="color:${r.value > 180 ? 'var(--red)' : (r.value < 70 ? 'var(--amber)' : 'var(--green)')}">${r.value} <span style="font-size:0.7rem; color:var(--text-dim)">mg/dL</span></div>
+                    <div class="h-meta">${new Date(r.time).toLocaleDateString([], {day:'2-digit', month:'short'})} · ${r.context}</div>
+                </div>
+                <button onclick="deleteEntry(${r.id})" style="background:none; border:none; color:var(--text-dim); padding: 10px; font-size: 1.2rem;">✕</button>
+            </div>
+        `).join('');
+    }
+
+    function deleteEntry(id) {
+        if (!confirm("Delete this entry?")) return;
+        const tx = db.transaction("readings", "readwrite");
+        tx.objectStore("readings").delete(id);
+        tx.oncomplete = refreshUI;
+    }
+
+    function wipeData() {
+        if (!confirm("Wipe ALL data? This cannot be undone.")) return;
+        const tx = db.transaction("readings", "readwrite");
+        tx.objectStore("readings").clear();
+        tx.oncomplete = () => location.reload();
+    }
+
+    // --- ANALYTICS ---
+    let myChart;
+    async function renderCharts() {
+        const tx = db.transaction("readings", "readonly");
+        const all = await new Promise(res => {
+            tx.objectStore("readings").getAll().onsuccess = e => res(e.target.result);
+        });
+
+        const last15 = all.slice(-15); 
+        const labels = last15.map(r => new Date(r.time).toLocaleDateString([], {month:'short', day:'numeric'}));
+        const values = last15.map(r => r.value);
+
+        if(values.length) {
+            document.getElementById('stat-avg').innerText = Math.round(values.reduce((a,b)=>a+b)/values.length);
+            document.getElementById('stat-max').innerText = Math.max(...values);
+        }
+
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    borderColor: '#e8a045',
+                    backgroundColor: 'rgba(232, 160, 69, 0.15)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#e8a045'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#2e2b24' }, ticks: { color: '#8a8070', font: { family: 'DM Mono' } } },
+                    x: { grid: { display: false }, ticks: { color: '#8a8070', font: { family: 'DM Mono' } } }
+                }
+            }
+        });
+    }
+
+    async function exportCSV() {
+        const tx = db.transaction("readings", "readonly");
+        const all = await new Promise(res => tx.objectStore("readings").getAll().onsuccess = e => res(e.target.result));
+        
+        let csv = "Date,Time,Value_mgdL,Context\n";
+        all.forEach(r => {
+            const d = new Date(r.time);
+            csv += `${d.toLocaleDateString()},${d.toLocaleTimeString()},${r.value},${r.context}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `glucose_data_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+    }
+
+    // --- INITIALIZE ---
+    document.getElementById('bg-time').value = new Date().toISOString().slice(0, 16);
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('date-now').innerHTML = now.toLocaleDateString('en-IN', { weekday:'short', month:'short', day:'numeric'}) + '<br>' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }, 1000);
+</script>
+</body>
+</html>
