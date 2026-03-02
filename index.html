@@ -6,11 +6,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f0e0c">
-    
     <title>GlucoTrack Pro</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩸</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:wght@600&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -32,7 +32,7 @@
         .logo span { color: var(--amber); }
         .date-display { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); text-align: right; }
 
-        .hero-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px 20px; text-align: center; margin-bottom: 20px; }
+        .hero-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
         .hero-label { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
         .hero-value { font-size: 5rem; font-weight: 600; font-family: var(--mono); line-height: 1; color: var(--amber); }
 
@@ -51,29 +51,23 @@
         /* SCANNER OVERLAY */
         #scanner-overlay { position: fixed; inset: 0; background: #000; z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         #scanner-video { width: 100%; height: 100%; object-fit: cover; }
-        .viewfinder { position: absolute; width: 300px; height: 180px; border: 2px solid var(--amber); border-radius: 20px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.75); }
+        .viewfinder { position: absolute; width: 300px; height: 180px; border: 2px solid var(--amber); border-radius: 20px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.75); pointer-events: none; }
         .viewfinder-shimmer { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--amber); box-shadow: 0 0 15px var(--amber); animation: scanline 2.5s infinite linear; }
         @keyframes scanline { 0% { top: 0; } 100% { top: 100%; } }
         
-        /* CONFIDENCE UI */
-        .ocr-feedback { position: absolute; top: 100px; width: 300px; text-align: center; font-family: var(--mono); }
+        .ocr-feedback { position: absolute; top: 80px; width: 300px; text-align: center; font-family: var(--mono); z-index: 5001; }
         .confidence-bar-container { width: 100%; height: 6px; background: #333; border-radius: 3px; margin-top: 8px; overflow: hidden; }
-        #confidence-bar { width: 0%; height: 100%; background: var(--red); transition: width 0.3s, background 0.3s; }
-        #ocr-status-text { font-size: 0.7rem; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+        #confidence-bar { width: 0%; height: 100%; background: var(--red); transition: width 0.3s; }
+        #ocr-status-text { font-size: 0.7rem; color: #fff; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
-        /* TIMEOUT PROMPT */
-        #manual-entry-prompt { position: absolute; bottom: 200px; display: none; animation: slideUp 0.3s ease; }
-        .btn-prompt { background: rgba(232, 160, 69, 0.9); color: #000; border: none; padding: 12px 24px; border-radius: 30px; font-family: var(--mono); font-weight: bold; font-size: 0.8rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        #manual-entry-prompt { position: absolute; bottom: 150px; display: none; z-index: 5001; }
+        .btn-prompt { background: var(--amber); color: #000; border: none; padding: 12px 24px; border-radius: 30px; font-family: var(--mono); font-weight: bold; font-size: 0.8rem; }
 
-        .scanner-close { position: absolute; top: 50px; right: 20px; color: #fff; background: rgba(255,255,255,0.2); border: none; padding: 12px 24px; border-radius: 30px; font-family: var(--mono); }
+        .scanner-close { position: absolute; top: 40px; right: 20px; color: #fff; background: rgba(255,255,255,0.2); border: none; padding: 12px 24px; border-radius: 30px; font-family: var(--mono); z-index: 5002; }
 
         .panel { display: none; animation: fadeIn 0.3s ease; }
         .panel.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .history-item { background: var(--card); border: 1px solid var(--border); padding: 18px; border-radius: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .h-val { font-family: var(--mono); font-size: 1.6rem; font-weight: 600; }
 
         nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: rgba(15,14,12,0.98); border-top: 1px solid var(--border); display: flex; padding: 12px 0 30px; z-index: 4000; }
         .nav-item { flex: 1; text-align: center; color: var(--text-dim); font-family: var(--mono); font-size: 0.6rem; text-transform: uppercase; border: none; background: none; }
@@ -92,9 +86,9 @@
     </header>
 
     <div class="hero-card">
-        <div class="hero-label">Latest Blood Glucose</div>
+        <div class="hero-label">Latest Reading</div>
         <div class="hero-value" id="hero-val">--</div>
-        <div style="font-family:var(--mono); font-size:0.75rem; color:var(--text-dim); margin-top:10px" id="hero-time">No records found</div>
+        <div style="font-family:var(--mono); font-size:0.7rem; color:var(--text-dim); margin-top:10px" id="hero-time">Waiting for data...</div>
     </div>
 
     <div class="tabs">
@@ -107,12 +101,12 @@
     <div id="panel-log" class="panel active">
         <button class="btn-scan" onclick="startScanner()">
             <span style="font-size: 2rem;">📸</span>
-            <strong>Smart Scan Screen</strong>
-            <small style="opacity: 0.7; font-weight: normal;">Control D / Apollo / AccuCheck</small>
+            <strong>Open Smart Scanner</strong>
+            <small style="opacity: 0.7; font-weight: normal;">Hold still for AI detection</small>
         </button>
 
         <div class="input-group">
-            <label>Glucose Level (mg/dL)</label>
+            <label>Blood Glucose (mg/dL)</label>
             <input type="number" id="bg-input" class="big-input" placeholder="---">
         </div>
 
@@ -127,11 +121,10 @@
                 </select>
             </div>
             <div>
-                <label>Date/Time</label>
+                <label>Time</label>
                 <input type="datetime-local" id="bg-time">
             </div>
         </div>
-        
         <button class="btn-save" onclick="saveEntry()">Save Entry</button>
     </div>
 
@@ -145,9 +138,9 @@
     </div>
     <div id="panel-data" class="panel">
         <div class="input-group">
-            <label>Data Management</label>
+            <label>Backup & Safety</label>
             <button class="btn-save" style="background: #242118; color: var(--amber); border: 1px solid var(--border); margin-bottom: 12px;" onclick="exportCSV()">📊 Export CSV</button>
-            <button class="btn-save" style="background: transparent; color: var(--red); border: 1px solid var(--red);" onclick="wipeData()">🗑 Wipe All Data</button>
+            <button class="btn-save" style="background: transparent; color: var(--red); border: 1px solid var(--red);" onclick="wipeData()">🗑 Delete All Data</button>
         </div>
     </div>
 </div>
@@ -161,23 +154,15 @@
 
 <!-- SCANNER UI -->
 <div id="scanner-overlay">
-    <video id="scanner-video" playsinline autoplay></video>
-    
+    <video id="scanner-video" playsinline autoplay muted></video>
     <div class="ocr-feedback">
-        <div id="ocr-status-text">Initializing Camera...</div>
-        <div class="confidence-bar-container">
-            <div id="confidence-bar"></div>
-        </div>
+        <div id="ocr-status-text">Warming up Camera...</div>
+        <div class="confidence-bar-container"><div id="confidence-bar"></div></div>
     </div>
-
     <div class="viewfinder"><div class="viewfinder-shimmer"></div></div>
-
     <div id="manual-entry-prompt">
-        <button class="btn-prompt" onclick="stopScanner(); document.getElementById('bg-input').focus();">
-            Can't read? Enter Manually
-        </button>
+        <button class="btn-prompt" onclick="stopScanner()">Stop & Enter Manually</button>
     </div>
-
     <button class="scanner-close" onclick="stopScanner()">Cancel</button>
     <canvas id="ocr-canvas" style="display:none"></canvas>
 </div>
@@ -226,16 +211,22 @@
 
     async function startScanner() {
         try {
-            document.getElementById('ocr-status-text').innerText = "Starting AI...";
             await initTesseract();
-            videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', focusMode: 'continuous' } });
-            document.getElementById('scanner-video').srcObject = videoStream;
-            document.getElementById('scanner-overlay').style.display = 'flex';
-            document.getElementById('manual-entry-prompt').style.display = 'none';
-            isScanning = true;
-            scanStartTime = Date.now();
-            processFrame();
-        } catch (err) { alert("Camera error: " + err); }
+            const video = document.getElementById('scanner-video');
+            videoStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment', focusMode: 'continuous', width: { ideal: 1280 } } 
+            });
+            video.srcObject = videoStream;
+            
+            // Wait for video metadata to be loaded to avoid "too small" error
+            video.onloadedmetadata = () => {
+                document.getElementById('scanner-overlay').style.display = 'flex';
+                document.getElementById('manual-entry-prompt').style.display = 'none';
+                isScanning = true;
+                scanStartTime = Date.now();
+                processFrame();
+            };
+        } catch (err) { alert("Camera Permission Required"); }
     }
 
     function stopScanner() {
@@ -250,51 +241,51 @@
         const video = document.getElementById('scanner-video');
         const canvas = document.getElementById('ocr-canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        const bar = document.getElementById('confidence-bar');
-        const statusTxt = document.getElementById('ocr-status-text');
 
-        // Check for 10s timeout
-        if (Date.now() - scanStartTime > 10000) {
+        if (Date.now() - scanStartTime > 8000) {
             document.getElementById('manual-entry-prompt').style.display = 'block';
         }
 
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            const scale = video.videoWidth / video.clientWidth;
-            const w = 300 * scale, h = 180 * scale;
-            const x = (video.videoWidth - w) / 2, y = (video.videoHeight - h) / 2;
-            canvas.width = w; canvas.height = h;
-            ctx.drawImage(video, x, y, w, h, 0, 0, w, h);
+            const vW = video.videoWidth;
+            const vH = video.videoHeight;
+            
+            // Robust check: Ensure video dimensions are sane
+            if (vW < 100) { setTimeout(processFrame, 500); return; }
 
-            // B&W Thresholding
-            let imgData = ctx.getImageData(0, 0, w, h);
+            // Define crop based on intrinsic video size, not CSS size
+            const cropW = vW * 0.65;
+            const cropH = vH * 0.25;
+            const cropX = (vW - cropW) / 2;
+            const cropY = (vH - cropH) / 2;
+
+            canvas.width = cropW; canvas.height = cropH;
+            ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+            // B&W Filter + Dilation (to bridge 7-segment gaps)
+            let imgData = ctx.getImageData(0, 0, cropW, cropH);
             let d = imgData.data;
             for (let i = 0; i < d.length; i += 4) {
                 let v = (d[i] + d[i+1] + d[i+2]) / 3;
-                let final = v > 115 ? 255 : 0; 
-                d[i] = d[i+1] = d[i+2] = final;
+                let bw = v > 120 ? 255 : 0; 
+                d[i] = d[i+1] = d[i+2] = bw;
             }
             ctx.putImageData(imgData, 0, 0);
 
             const { data: { text, confidence } } = await worker.recognize(canvas);
-            const num = parseInt(text.trim());
+            const num = parseInt(text.trim().substring(0,3));
 
-            // Update Confidence UI
+            // Update UI Feedback
+            const bar = document.getElementById('confidence-bar');
+            const statusTxt = document.getElementById('ocr-status-text');
             bar.style.width = confidence + "%";
-            if (confidence < 50) {
-                bar.style.background = "var(--red)";
-                statusTxt.innerText = "Aligning Screen...";
-            } else if (confidence < 80) {
-                bar.style.background = "#d4c15a"; // Yellow
-                statusTxt.innerText = "Reading Number...";
-            } else {
-                bar.style.background = "var(--green)";
-                statusTxt.innerText = "Match Found!";
-            }
+            bar.style.background = confidence > 80 ? "var(--green)" : (confidence > 50 ? "#d4c15a" : "var(--red)");
+            statusTxt.innerText = confidence > 80 ? "Match Found!" : "Analyzing Screen...";
 
-            if (confidence > 82 && num > 20 && num < 600) {
+            if (confidence > 84 && num > 20 && num < 600) {
                 if (navigator.vibrate) navigator.vibrate(200);
                 document.getElementById('bg-input').value = num;
-                notify(`Captured: ${num} mg/dL`);
+                notify(`Reading: ${num} mg/dL`);
                 stopScanner();
                 return;
             }
@@ -305,34 +296,35 @@
     // --- DATA ---
     function saveEntry() {
         const val = parseInt(document.getElementById('bg-input').value);
-        if (!val || val < 10) return alert("Invalid number.");
+        if (!val || val < 10) return alert("Enter a valid number");
         const entry = { value: val, context: document.getElementById('bg-context').value, time: document.getElementById('bg-time').value || new Date().toISOString(), id: Date.now() };
         const tx = db.transaction("readings", "readwrite");
         tx.objectStore("readings").add(entry);
-        tx.oncomplete = () => { document.getElementById('bg-input').value = ""; notify("Saved!"); refreshUI(); showTab('history'); };
+        tx.oncomplete = () => { document.getElementById('bg-input').value = ""; notify("Entry Saved"); refreshUI(); showTab('history'); };
     }
 
     async function refreshUI() {
+        if (!db) return;
         const tx = db.transaction("readings", "readonly");
         const all = await new Promise(res => tx.objectStore("readings").getAll().onsuccess = e => res(e.target.result));
         const sorted = all.sort((a, b) => new Date(b.time) - new Date(a.time));
         
         if (sorted.length > 0) {
             document.getElementById('hero-val').innerText = sorted[0].value;
-            document.getElementById('hero-time').innerText = `Last: ${new Date(sorted[0].time).toLocaleDateString()} ${sorted[0].context}`;
+            document.getElementById('hero-time').innerText = `Last: ${new Date(sorted[0].time).toLocaleDateString()} (${sorted[0].context})`;
         }
         document.getElementById('history-container').innerHTML = sorted.map(r => `
             <div class="history-item">
                 <div>
-                    <div class="h-val" style="color:${r.value > 180 ? 'var(--red)' : (r.value < 70 ? 'var(--amber)' : 'var(--green)')}">${r.value} <small style="font-size:0.6rem">mg/dL</small></div>
+                    <div class="h-val" style="color:${r.value > 180 ? 'var(--red)' : (r.value < 70 ? 'var(--amber)' : 'var(--green)')}">${r.value}</div>
                     <div style="font-family:var(--mono); font-size:0.7rem; color:var(--text-dim)">${new Date(r.time).toLocaleDateString()} · ${r.context}</div>
                 </div>
                 <button onclick="deleteEntry(${r.id})" style="background:none; border:none; color:var(--text-dim); font-size:1.2rem">✕</button>
             </div>`).join('');
     }
 
-    function deleteEntry(id) { if(confirm("Delete?")) { const tx = db.transaction("readings", "readwrite"); tx.objectStore("readings").delete(id); tx.oncomplete = refreshUI; } }
-    function wipeData() { if(confirm("WIPE ALL?")) { const tx = db.transaction("readings", "readwrite"); tx.objectStore("readings").clear(); tx.oncomplete = () => location.reload(); } }
+    function deleteEntry(id) { if(confirm("Delete reading?")) { const tx = db.transaction("readings", "readwrite"); tx.objectStore("readings").delete(id); tx.oncomplete = refreshUI; } }
+    function wipeData() { if(confirm("ERASE ALL DATA?")) { const tx = db.transaction("readings", "readwrite"); tx.objectStore("readings").clear(); tx.oncomplete = () => location.reload(); } }
 
     async function renderCharts() {
         const tx = db.transaction("readings", "readonly");
@@ -342,7 +334,7 @@
         if(vals.length) { document.getElementById('stat-avg').innerText = Math.round(vals.reduce((a,b)=>a+b)/vals.length); document.getElementById('stat-max').innerText = Math.max(...vals); }
         const ctx = document.getElementById('trendChart').getContext('2d');
         if (window.chart) window.chart.destroy();
-        window.chart = new Chart(ctx, { type: 'line', data: { labels: last15.map(r => new Date(r.time).toLocaleDateString([], {month:'short', day:'numeric'})), datasets: [{ data: vals, borderColor: '#e8a045', backgroundColor: 'rgba(232, 160, 69, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+        window.chart = new Chart(ctx, { type: 'line', data: { labels: last15.map(r => new Date(r.time).toLocaleDateString([], {month:'short', day:'numeric'})), datasets: [{ data: vals, borderColor: '#e8a045', backgroundColor: 'rgba(232, 160, 69, 0.1)', fill: true, tension: 0.3, pointRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
     }
 
     async function exportCSV() {
@@ -350,7 +342,7 @@
         const all = await new Promise(res => tx.objectStore("readings").getAll().onsuccess = e => res(e.target.result));
         let csv = "Date,Time,Value,Context\n" + all.map(r => `${new Date(r.time).toLocaleDateString()},${new Date(r.time).toLocaleTimeString()},${r.value},${r.context}`).join("\n");
         const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `glucose_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `glucose_data.csv`; a.click();
     }
 
     document.getElementById('bg-time').value = new Date().toISOString().slice(0, 16);
